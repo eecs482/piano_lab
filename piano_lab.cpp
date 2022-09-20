@@ -22,15 +22,39 @@ void play(Note i){
 }
 
 /* Add global variables and helper functions here */
-
+Note currentNote = na;
+mutex noteMutex;
+cv conductorCv;
+std::map<Note, cv> pianoCVs;
 
 void conductor(){
     std::ifstream infile("input.txt");
-    /* implement here */
+    int tmpNote;
+    while(infile >> tmpNote){
+        noteMutex.lock();
+
+        while(currentNote != na){
+            conductorCv.wait(noteMutex);
+        }
+
+        currentNote = (Note)tmpNote;
+        pianoCVs[(Note)tmpNote].signal();
+        noteMutex.unlock();
+    }
 }
 
 void pianoKey(Note i){
-    /* implement here */
+    noteMutex.lock();
+
+    while(currentNote != i){
+        pianoCVs[i].wait(noteMutex);
+    }
+
+    play(i);
+    currentNote = na;
+    conductorCv.signal();
+
+    noteMutex.unlock();
 }
 
 /* more given helper functions for thread setup*/
@@ -50,5 +74,8 @@ void manageThreads(){
 
 int main(int argc, char **argv)
 {
+    for(int i = 1; i<=7; ++i){
+        pianoCVs[(Note)i] = cv();
+    }
     cpu::boot((thread_startfunc_t) manageThreads, (void *) 0, 0);
 }
