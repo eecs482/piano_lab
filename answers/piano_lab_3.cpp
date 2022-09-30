@@ -43,31 +43,25 @@ void conductor(){
     }
 }
 
-void pianoKey(Note i){
-    noteMutex.lock();
-
-    while(currentNote != i){
-        pianoCVs[i].wait(noteMutex);
-    }
-
-    play(i);
-    currentNote = na;
-    conductorCv.signal();
-
-    noteMutex.unlock();
-}
-
-/* more given helper functions for thread setup*/
-void pianoKeyWrapper(void* note){
+void pianoKey(void* note){
     Note i = (Note)(intptr_t) note;
-    while(true){
-        pianoKey(i);
+
+    noteMutex.lock();
+    while (true) {
+        while(currentNote != i){
+            pianoCVs[i].wait(noteMutex);
+        }
+
+        play(i);
+        currentNote = na;
+        conductorCv.signal();
     }
+    noteMutex.unlock();
 }
 
 void manageThreads(){
     for(intptr_t i = 1; i<=7; ++i){
-        thread((thread_startfunc_t)pianoKeyWrapper, (void*) i);
+        thread((thread_startfunc_t)pianoKey, (void*) i);
     }
     thread((thread_startfunc_t)conductor, (void*) 0);
 }
