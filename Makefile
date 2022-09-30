@@ -1,7 +1,7 @@
 CC=g++ -g -Wall -std=c++17
 
 # List of source files for your disk scheduler
-PIANO_SOURCES=piano_lab.cpp
+PIANO_SOURCES=piano_lab_3.cpp
 
 # Generate the names of the disk scheduler's object files
 PIANO_OBJS=${PIANO_SOURCES:.cpp=.o}
