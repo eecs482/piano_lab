@@ -29,21 +29,14 @@ void conductor(){
     /* implement here */
 }
 
-void pianoKey(Note i){
-    /* implement here */
-}
-
-/* more given helper functions for thread setup*/
-void pianoKeyWrapper(void* note){
+void pianoKey(void* note){
     Note i = (Note)(intptr_t) note;
-    while(true){
-        pianoKey(i);
-    }
+    /* implement here */
 }
 
 void manageThreads(){
     for(intptr_t i = 1; i<=7; ++i){
-        thread((thread_startfunc_t)pianoKeyWrapper, (void*) i);
+        thread((thread_startfunc_t)pianoKey, (void*) i);
     }
     thread((thread_startfunc_t)conductor, (void*) 0);
 }
