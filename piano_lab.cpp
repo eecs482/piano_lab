@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -6,7 +5,6 @@
 
 #include <map>
 #include <cassert>
-#include "disk.h"
 #include "thread.h"
 
 using std::cout;

@@ -20,14 +20,13 @@ $(info Detected OS is: $(detected_OS))
 # Use Mac library if on Mac
 ifeq ($(detected_OS),Darwin)  # Important to not have a space after the comma
         LIBTHREAD = libthread_macos.o
-					CC += -D_XOPEN_SOURCE
+		CC += -D_XOPEN_SOURCE
 endif
 
 all: piano
 
 # Compile the disk scheduler and tag this compilation
 piano: ${PIANO_OBJS} $(LIBTHREAD)
-	./autotag.sh
 	${CC} -o $@ $^ -ldl -pthread 
 
 # Generic rules for compiling a source file to an object file
