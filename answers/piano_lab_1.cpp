@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -6,7 +5,6 @@
 
 #include <map>
 #include <cassert>
-#include "disk.h"
 #include "thread.h"
 
 using std::cout;
@@ -14,7 +12,7 @@ using std::endl;
 
 /* given helper functions and variables */
 enum Note { na = 0, d0 = 1, re = 2, mi = 3, fa = 4, sol = 5, la = 6, ti = 7};
-std::string notes_str[] = {"empty", "do", "re", "mi", "fa", "sol", "la", "ti"};
+std::vector<std::string> notes_str = {"empty", "do", "re", "mi", "fa", "sol", "la", "ti"};
 
 void play(Note i){
     assert(i != na);
@@ -26,29 +24,37 @@ Note currentNote = na;
 mutex noteMutex;
 cv pianoCV;
 
-void conductor(){
-    std::ifstream infile("input.txt");
+/* Overload extraction operator so that we can read directly into a Note variable */
+std::ifstream& operator>>(std::ifstream& stream, Note& note){
     int tmpNote;
-    while(infile >> tmpNote){
+    stream >> tmpNote;
+    note = static_cast<Note>(tmpNote);
+    return stream;
+}
+
+void conductor(void* arg){
+    std::ifstream infile("input.txt");
+    Note nextNote;
+    while(infile >> nextNote){
         noteMutex.lock();
 
         while(currentNote != na){
             pianoCV.wait(noteMutex);
         }
 
-        currentNote = (Note)tmpNote;
+        currentNote = nextNote;
         pianoCV.broadcast();
         noteMutex.unlock();
     }
 }
 
 void pianoKey(void* note){
-    Note i = (Note)(intptr_t) note;
-    
+    Note i = static_cast<Note>((reinterpret_cast<intptr_t>(note)));
+
     noteMutex.lock();
     while (true) {
         while(currentNote != i){
-        pianoCV.wait(noteMutex);
+            pianoCV.wait(noteMutex);
         }
 
         play(i);
@@ -58,14 +64,14 @@ void pianoKey(void* note){
     noteMutex.unlock();
 }
 
-void manageThreads(){
+void manageThreads(void* arg){
     for(intptr_t i = 1; i<=7; ++i){
-        thread((thread_startfunc_t)pianoKey, (void*) i);
+        thread pianoKeyThread(reinterpret_cast<thread_startfunc_t>(pianoKey), reinterpret_cast<void*>(i));
     }
-    thread((thread_startfunc_t)conductor, (void*) 0);
+    thread conductorThread(reinterpret_cast<thread_startfunc_t>(conductor), nullptr);
 }
 
 int main(int argc, char **argv)
 {
-    cpu::boot((thread_startfunc_t) manageThreads, (void *) 0, 0);
+    cpu::boot(reinterpret_cast<thread_startfunc_t>(manageThreads), nullptr, 0);
 }
