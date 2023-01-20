@@ -14,6 +14,14 @@ using std::endl;
 enum Note { na = 0, d0 = 1, re = 2, mi = 3, fa = 4, sol = 5, la = 6, ti = 7 };
 std::vector<std::string> notes_str = {"empty", "do", "re", "mi", "fa", "sol", "la", "ti"};
 
+/* Overload extraction operator so that we can read directly into a Note variable */
+std::ifstream &operator>>(std::ifstream &stream, Note &note) {
+    int tmpNote;
+    stream >> tmpNote;
+    note = static_cast<Note>(tmpNote);
+    return stream;
+}
+
 void play(Note i) {
     assert(i != na);
     cout << notes_str[i] << endl;
