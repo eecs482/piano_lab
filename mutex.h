@@ -1,5 +1,8 @@
-#ifndef _MUTEX_H
-#define _MUTEX_H
+/*
+ * mutex.h -- interface to the mutex class
+ */
+
+#pragma once
 
 class mutex {
 public:
@@ -8,9 +11,6 @@ public:
 
     void lock();
     void unlock();
-
-    class impl;                                 // defined by the thread library
-    impl* impl_ptr;                             // used by the thread library
 
     /*
      * Disable the copy constructor and copy assignment operator.
@@ -24,5 +24,3 @@ public:
     mutex(mutex&&);
     mutex& operator=(mutex&&);
 };
-
-#endif /* _MUTEX_H */

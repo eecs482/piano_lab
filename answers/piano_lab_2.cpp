@@ -1,45 +1,47 @@
-#include <iostream>
 #include <fstream>
-#include <vector>
+#include <iostream>
 #include <string>
+#include <vector>
 
-#include <map>
-#include <cassert>
+#include "cpu.h"
 #include "thread.h"
+#include "mutex.h"
+#include "cv.h"
+#include <cassert>
 
 using std::cout;
 using std::endl;
 
 /* given helper functions and variables */
-enum Note { na = 0, d0 = 1, re = 2, mi = 3, fa = 4, sol = 5, la = 6, ti = 7};
+enum class Note : uintptr_t { Na = 0, Do = 1, Re = 2, Mi = 3, Fa = 4, So = 5, La = 6, Ti = 7 };
 std::vector<std::string> notes_str = {"empty", "do", "re", "mi", "fa", "sol", "la", "ti"};
 
-void play(Note i){
-    assert(i != na);
-    cout << notes_str[i] << endl;
-}
-
-/* Add global variables and helper functions here */
-Note currentNote = na;
-mutex noteMutex;
-cv pianoCv;
-cv conductorCv;
-
 /* Overload extraction operator so that we can read directly into a Note variable */
-std::ifstream& operator>>(std::ifstream& stream, Note& note){
+std::ifstream &operator>>(std::ifstream &stream, Note &note) {
     int tmpNote;
     stream >> tmpNote;
     note = static_cast<Note>(tmpNote);
     return stream;
 }
 
-void conductor(void* arg){
+void play(Note i) {
+    assert(i != Note::Na);
+    cout << notes_str[static_cast<uintptr_t>(i)] << endl;
+}
+
+/* Add global variables and helper functions here */
+Note currentNote = Note::Na;
+mutex noteMutex;
+cv pianoCv;
+cv conductorCv;
+
+void conductor(void *arg) {
     std::ifstream infile("input.txt");
     Note nextNote;
     while(infile >> nextNote){
         noteMutex.lock();
 
-        while(currentNote != na){
+        while(currentNote != Note::Na){
             conductorCv.wait(noteMutex);
         }
 
@@ -49,9 +51,8 @@ void conductor(void* arg){
     }
 }
 
-void pianoKey(void* note){
-    Note i = static_cast<Note>((reinterpret_cast<intptr_t>(note)));
-
+void pianoKey(void *note) {
+    auto i = static_cast<Note>((reinterpret_cast<uintptr_t>(note)));
     noteMutex.lock();
     while (true) {
         while(currentNote != i){
@@ -59,20 +60,19 @@ void pianoKey(void* note){
         }
 
         play(i);
-        currentNote = na;
+        currentNote = Note::Na;
         conductorCv.signal();
     }
     noteMutex.unlock();
 }
 
-void manageThreads(void* arg){
-    for(intptr_t i = 1; i<=7; ++i){
-        thread pianoKeyThread(reinterpret_cast<thread_startfunc_t>(pianoKey), reinterpret_cast<void*>(i));
+void manageThreads(void *arg) {
+    for (uintptr_t i = 1; i <= 7; ++i) {
+        thread pianoKeyThread(pianoKey, reinterpret_cast<void *>(i));
     }
-    thread conductorThread(reinterpret_cast<thread_startfunc_t>(conductor), nullptr);
+    thread conductorThread(conductor, nullptr);
 }
 
-int main(int argc, char **argv)
-{
-    cpu::boot(reinterpret_cast<thread_startfunc_t>(manageThreads), nullptr, 0);
+int main(int argc, char **argv) {
+    cpu::boot(manageThreads, nullptr, 0);
 }

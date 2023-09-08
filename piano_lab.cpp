@@ -3,15 +3,15 @@
 #include <string>
 #include <vector>
 
+#include "cpu.h"
 #include "thread.h"
 #include <cassert>
-#include <map>
 
 using std::cout;
 using std::endl;
 
 /* given helper functions and variables */
-enum Note { na = 0, d0 = 1, re = 2, mi = 3, fa = 4, sol = 5, la = 6, ti = 7 };
+enum class Note : uintptr_t { Na = 0, Do = 1, Re = 2, Mi = 3, Fa = 4, So = 5, La = 6, Ti = 7 };
 std::vector<std::string> notes_str = {"empty", "do", "re", "mi", "fa", "sol", "la", "ti"};
 
 /* Overload extraction operator so that we can read directly into a Note variable */
@@ -23,8 +23,8 @@ std::ifstream &operator>>(std::ifstream &stream, Note &note) {
 }
 
 void play(Note i) {
-    assert(i != na);
-    cout << notes_str[i] << endl;
+    assert(i != Note::Na);
+    cout << notes_str[static_cast<uintptr_t>(i)] << endl;
 }
 
 /* Add global variables and helper functions here */
@@ -35,17 +35,17 @@ void conductor(void *arg) {
 }
 
 void pianoKey(void *note) {
-    Note i = static_cast<Note>((reinterpret_cast<intptr_t>(note)));
+    auto i = static_cast<Note>((reinterpret_cast<uintptr_t>(note)));
     /* implement here */
 }
 
 void manageThreads(void *arg) {
-    for (intptr_t i = 1; i <= 7; ++i) {
-        thread pianoKeyThread(reinterpret_cast<thread_startfunc_t>(pianoKey), reinterpret_cast<void *>(i));
+    for (uintptr_t i = 1; i <= 7; ++i) {
+        thread pianoKeyThread(pianoKey, reinterpret_cast<void *>(i));
     }
-    thread conductorThread(reinterpret_cast<thread_startfunc_t>(conductor), nullptr);
+    thread conductorThread(conductor, nullptr);
 }
 
 int main(int argc, char **argv) {
-    cpu::boot(reinterpret_cast<thread_startfunc_t>(manageThreads), nullptr, 0);
+    cpu::boot(manageThreads, nullptr, 0);
 }

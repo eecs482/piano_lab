@@ -1,4 +1,4 @@
-CC=g++ -g -Wall -std=c++17
+CC=g++ -g -Wall -std=c++20
 
 # List of source files for your disk scheduler
 PIANO_SOURCES=piano_lab.cpp
