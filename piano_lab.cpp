@@ -1,30 +1,34 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <type_traits>
 #include <vector>
-
-#include "cpu.h"
-#include "thread.h"
 #include <cassert>
+
+#include "cv.h"
+#include "cpu.h"
+#include "mutex.h"
+#include "thread.h"
 
 using std::cout;
 using std::endl;
 
 /* given helper functions and variables */
+
 enum class Note : uintptr_t { Na = 0, Do = 1, Re = 2, Mi = 3, Fa = 4, So = 5, La = 6, Ti = 7 };
-std::vector<std::string> notes_str = {"empty", "do", "re", "mi", "fa", "sol", "la", "ti"};
+std::vector<std::string> notes_str{"empty", "do", "re", "mi", "fa", "sol", "la", "ti"};
 
 /* Overload extraction operator so that we can read directly into a Note variable */
 std::ifstream &operator>>(std::ifstream &stream, Note &note) {
-    int tmpNote;
-    stream >> tmpNote;
-    note = static_cast<Note>(tmpNote);
+    std::underlying_type_t<Note> temp{};
+    stream >> temp;
+    note = static_cast<Note>(temp);
     return stream;
 }
 
-void play(Note i) {
-    assert(i != Note::Na);
-    cout << notes_str[static_cast<uintptr_t>(i)] << endl;
+void play(Note note) {
+    assert(note != Note::Na);
+    cout << notes_str[static_cast<size_t>(note)] << endl;
 }
 
 /* Add global variables and helper functions here */
@@ -34,8 +38,8 @@ void conductor(void *arg) {
     /* implement here */
 }
 
-void pianoKey(void *note) {
-    auto i = static_cast<Note>((reinterpret_cast<uintptr_t>(note)));
+void pianoKey(void *arg) {
+    auto note = static_cast<Note>(reinterpret_cast<uintptr_t>(arg));
     /* implement here */
 }
 
