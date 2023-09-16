@@ -1,5 +1,7 @@
+#include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -61,7 +63,9 @@ void conductor(void *arg) {
 }
 
 void pianoKey(void *note) {
-    auto i = static_cast<Note>((reinterpret_cast<uintptr_t>(note)));
+    auto p = std::unique_ptr<uintptr_t>(static_cast<uintptr_t*>(note));
+    auto i = static_cast<Note>(*p);
+
     lock_guard g;
     while (true) {
         while(currentNote != i){
@@ -75,7 +79,7 @@ void pianoKey(void *note) {
 
 void manageThreads(void *arg) {
     for (uintptr_t i = 1; i <= 7; ++i) {
-        thread pianoKeyThread(pianoKey, reinterpret_cast<void *>(i));
+        thread pianoKeyThread(pianoKey, std::make_unique<uintptr_t>(i).release());
     }
     thread conductorThread(conductor, nullptr);
 }
